@@ -1,8 +1,11 @@
-Config = {} -- Don't touch this line
+Config = {}                            -- Don't touch this line
 
 Config.ServerName = 'Your Server Name' -- Name of the server
 
+Config.VersionCheck = true             -- Check for the latest version of the script
+
 Config.Locales = {
+    API_Checking = '[🚧]: Checking for VPN', -- Message when the API is checking for VPN
     VPN_Detected = 'VPN Detected', -- Title of the card
     VPN_Detected_Message =
     'Joining with a VPN is not allowed. This can also be caused by things like cloud gaming!\nIf you are not using a VPN, you can create a ticket in the Discord', -- Message of the card
