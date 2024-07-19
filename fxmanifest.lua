@@ -2,7 +2,7 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
-author 'MauroKrekels'
+author 'Wave Projects'
 description 'FiveM resource to prevent players from joining with a VPN'
 version '1.0.0'
 
