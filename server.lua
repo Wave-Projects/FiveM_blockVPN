@@ -71,6 +71,12 @@ AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
             if data.proxy then
                 AlreadyChecked[playerIP] = true
                 deferrals.presentCard(adaptiveCard)
+            elseif not Config.HostingCheck and data.hosting then
+                AlreadyChecked[playerIP] = true
+                deferrals.presentCard(adaptiveCard)
+            elseif Config.CountryCheck and not Config.AllowedCountrys[(data.countryCode or "unkown")] then
+                AlreadyChecked[playerIP] = true
+                deferrals.presentCard(adaptiveCard)
             else
                 AlreadyChecked[playerIP] = false
                 deferrals.done()
