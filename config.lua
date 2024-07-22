@@ -10,14 +10,8 @@ Config.AllowedCountrys = {
     ["NL"] = true,
 }
 
-Config.Locales = {
-    API_Checking = '[🚧]: Checking for VPN', -- Message when the API is checking for VPN
-    VPN_Detected = 'VPN Detected', -- Title of the card
-    VPN_Detected_Message =
-    'Joining with a VPN is not allowed. This can also be caused by things like cloud gaming!\nIf you are not using a VPN, you can create a ticket in the Discord', -- Message of the card
-    API_Error = '[🚧]: An error occurred in the API', -- Error message when the API fails
-}
 
+-- More info about the buttons can be found here: https://adaptivecards.io/explorer/Action.OpenUrl.html
 Config.Buttons = {                          -- Here you can add buttons to the card (max 5 buttons)
     {
         title = 'Discord',                  -- Title of the button
@@ -27,4 +21,10 @@ Config.Buttons = {                          -- Here you can add buttons to the c
     -- Add more buttons here
 }
 
--- More info about the buttons can be found here: https://adaptivecards.io/explorer/Action.OpenUrl.html
+Config.Locales = {
+    API_Checking = '[🚧]: Checking for VPN', -- Message when the API is checking for VPN
+    VPN_Detected = 'VPN Detected', -- Title of the card
+    VPN_Detected_Message =
+    'Joining with a VPN is not allowed. This can also be caused by things like cloud gaming!\nIf you are not using a VPN, you can create a ticket in the Discord', -- Message of the card
+    API_Error = '[🚧]: An error occurred in the API', -- Error message when the API fails
+}
