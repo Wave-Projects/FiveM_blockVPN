@@ -28,10 +28,13 @@ local adaptiveCard = {
         },
     },
     ["hosting"] = {
-
+        -- present if player/user is not allowed ( hosting check )
     },
     ["country"] = {
-        
+        -- present if player/user is not allowed ( country check )
+    },
+    ["timeout"] = {
+        -- present for if something whent wrong
     }
 }
 
@@ -92,7 +95,7 @@ AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
                 deferrals.done()
             end
         else
-            deferrals.done(Config.Locales.API_Error)
+            deferrals.done(adaptiveCard["timeout"])
         end
     end)
 end)
