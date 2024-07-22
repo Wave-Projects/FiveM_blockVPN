@@ -98,7 +98,7 @@ AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
 end)
 
 if Config.VersionCheck then
-    Citizen.CreateThread(function()
+    CreateThread(function()
         local updatePath = "/Wave-Projects/FiveM_blockVPN"
         local resourceName = "FiveM_blockVPN (" .. GetCurrentResourceName() .. ")"
         local versionUrl = "https://raw.githubusercontent.com" .. updatePath .. "/master/version"
