@@ -4,6 +4,12 @@ Config.ServerName = 'Your Server Name' -- Name of the server
 
 Config.VersionCheck = true             -- Check for the latest version of the script
 
+Config.HostingCheck = false
+Config.CountryCheck = false
+Config.AllowedCountrys = {
+    ["NL"] = true,
+}
+
 Config.Locales = {
     API_Checking = '[🚧]: Checking for VPN', -- Message when the API is checking for VPN
     VPN_Detected = 'VPN Detected', -- Title of the card
