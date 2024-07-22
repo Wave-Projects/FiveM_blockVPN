@@ -4,8 +4,8 @@ Config.ServerName = 'Your Server Name' -- Name of the server
 
 Config.VersionCheck = true             -- Check for the latest version of the script
 
-Config.HostingCheck = false
-Config.CountryCheck = false
+Config.HostingCheck = false            -- Check if the user play on a vps or else.
+Config.CountryCheck = false            -- Only allowed specify country on your server
 Config.AllowedCountrys = {
     ["NL"] = true,
 }
