@@ -1,42 +1,52 @@
 local AlreadyChecked = {}
 local adaptiveCard = {
-    ["$schema"] = "http://adaptivecards.io/schemas/adaptive-card.json",
-    ["type"] = "AdaptiveCard",
-    ["version"] = "1.6",
-    ["body"] = {
-        {
-            ["type"] = "TextBlock",
-            ["text"] = Config.ServerName .. ' - ' .. Config.Locales.VPN_Detected,
-            ["weight"] = "bolder",
-            ["size"] = "large",
-            ["horizontalAlignment"] = "center",
-            ["wrap"] = true,
-        },
-        {
-            ["type"] = "TextBlock",
-            ["text"] = Config.Locales.VPN_Detected_Message,
-            ["size"] = "medium",
-            ["horizontalAlignment"] = "center",
-            ["wrap"] = true,
-        },
-        {
-            ["type"] = "ActionSet",
-            ["horizontalAlignment"] = "center",
-            ["actions"] = {}
+    ["vpn"] = {
+        ["$schema"] = "http://adaptivecards.io/schemas/adaptive-card.json",
+        ["type"] = "AdaptiveCard",
+        ["version"] = "1.6",
+        ["body"] = {
+            {
+                ["type"] = "TextBlock",
+                ["text"] = Config.ServerName .. ' - ' .. Config.Locales.VPN_Detected,
+                ["weight"] = "bolder",
+                ["size"] = "large",
+                ["horizontalAlignment"] = "center",
+                ["wrap"] = true,
+            },
+            {
+                ["type"] = "TextBlock",
+                ["text"] = Config.Locales.VPN_Detected_Message,
+                ["size"] = "medium",
+                ["horizontalAlignment"] = "center",
+                ["wrap"] = true,
+            },
+            {
+                ["type"] = "ActionSet",
+                ["horizontalAlignment"] = "center",
+                ["actions"] = {}
+            },
         },
     },
+    ["hosting"] = {
+
+    },
+    ["country"] = {
+        
+    }
 }
 
-Citizen.CreateThread(function()
+CreateThread(function()
     if Config.Buttons then
         for _, button in ipairs(Config.Buttons) do
             if button.title and button.url and button.style then
-                table.insert(adaptiveCard.body[3].actions, {
-                    ["type"] = "Action.OpenUrl",
-                    ["title"] = button.title,
-                    ["url"] = button.url,
-                    ["style"] = button.style,
-                })
+                for _, card in pairs(adaptiveCard) do
+                    table.insert(card.body[3].actions, {
+                        ["type"] = "Action.OpenUrl",
+                        ["title"] = button.title,
+                        ["url"] = button.url,
+                        ["style"] = button.style,
+                    })
+                end
             end
         end
     end
@@ -70,13 +80,13 @@ AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
         if data and data.status == "success" then
             if data.proxy then
                 AlreadyChecked[playerIP] = true
-                deferrals.presentCard(adaptiveCard)
+                deferrals.presentCard(adaptiveCard["vpn"])
             elseif not Config.HostingCheck and data.hosting then
                 AlreadyChecked[playerIP] = true
-                deferrals.presentCard(adaptiveCard)
+                deferrals.presentCard(adaptiveCard["hosting"])
             elseif Config.CountryCheck and not Config.AllowedCountrys[(data.countryCode or "unkown")] then
                 AlreadyChecked[playerIP] = true
-                deferrals.presentCard(adaptiveCard)
+                deferrals.presentCard(adaptiveCard["country"])
             else
                 AlreadyChecked[playerIP] = false
                 deferrals.done()
