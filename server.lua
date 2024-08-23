@@ -1,37 +1,70 @@
 local AlreadyChecked = {}
+local AlreadyCheckedCountry = {}
+local Buttons = {}
+
 local adaptiveCard = {
-    ["$schema"] = "http://adaptivecards.io/schemas/adaptive-card.json",
-    ["type"] = "AdaptiveCard",
-    ["version"] = "1.6",
-    ["body"] = {
-        {
-            ["type"] = "TextBlock",
-            ["text"] = Config.ServerName .. ' - ' .. Config.Locales.VPN_Detected,
-            ["weight"] = "bolder",
-            ["size"] = "large",
-            ["horizontalAlignment"] = "center",
-            ["wrap"] = true,
-        },
-        {
-            ["type"] = "TextBlock",
-            ["text"] = Config.Locales.VPN_Detected_Message,
-            ["size"] = "medium",
-            ["horizontalAlignment"] = "center",
-            ["wrap"] = true,
-        },
-        {
-            ["type"] = "ActionSet",
-            ["horizontalAlignment"] = "center",
-            ["actions"] = {}
+    VPN_Detected = {
+        ["$schema"] = "http://adaptivecards.io/schemas/adaptive-card.json",
+        ["type"] = "AdaptiveCard",
+        ["version"] = "1.6",
+        ["body"] = {
+            {
+                ["type"] = "TextBlock",
+                ["text"] = Config.ServerName .. ' - ' .. Config.Locales.VPN_Detected,
+                ["weight"] = "bolder",
+                ["size"] = "large",
+                ["horizontalAlignment"] = "center",
+                ["wrap"] = true,
+            },
+            {
+                ["type"] = "TextBlock",
+                ["text"] = Config.Locales.VPN_Detected_Message,
+                ["size"] = "medium",
+                ["horizontalAlignment"] = "center",
+                ["wrap"] = true,
+            },
+            {
+                ["type"] = "ActionSet",
+                ["horizontalAlignment"] = "center",
+                ["actions"] = Buttons
+            },
         },
     },
+    Country_Detected = {
+        ["$schema"] = "http://adaptivecards.io/schemas/adaptive-card.json",
+        ["type"] = "AdaptiveCard",
+        ["version"] = "1.6",
+        ["body"] = {
+            {
+                ["type"] = "TextBlock",
+                ["text"] = Config.ServerName .. ' - ' .. Config.Locales.Country_Detected,
+                ["weight"] = "bolder",
+                ["size"] = "large",
+                ["horizontalAlignment"] = "center",
+                ["wrap"] = true,
+            },
+            {
+                ["type"] = "TextBlock",
+                ["text"] = Config.Locales.Country_Detected_Message,
+                ["size"] = "medium",
+                ["horizontalAlignment"] = "center",
+                ["wrap"] = true,
+            },
+            {
+                ["type"] = "ActionSet",
+                ["horizontalAlignment"] = "center",
+                ["actions"] = Buttons
+            },
+        },
+    }
 }
 
-Citizen.CreateThread(function()
+local function initButtons()
+    if not Config.AdaptiveCard then return end
     if Config.Buttons then
         for _, button in ipairs(Config.Buttons) do
             if button.title and button.url and button.style then
-                table.insert(adaptiveCard.body[3].actions, {
+                table.insert(Buttons, {
                     ["type"] = "Action.OpenUrl",
                     ["title"] = button.title,
                     ["url"] = button.url,
@@ -40,7 +73,17 @@ Citizen.CreateThread(function()
             end
         end
     end
-end)
+end
+
+local function handleDeferral(deferrals, reason, card)
+    if Config.AdaptiveCard then
+        deferrals.presentCard(card)
+    else
+        deferrals.done(reason)
+    end
+end
+
+Citizen.CreateThread(initButtons)
 
 AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
     local src = source
@@ -49,31 +92,43 @@ AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
     deferrals.defer()
     deferrals.update(Config.Locales.API_Checking)
 
-    Wait(250)
+    if Config.AdaptiveCard then
+        Wait(250)
+    end
 
     if not playerIP then
         deferrals.done(Config.Locales.API_Error)
         return
     end
 
-    if AlreadyChecked[playerIP] ~= nil then
-        if AlreadyChecked[playerIP] then
-            deferrals.presentCard(adaptiveCard)
-        else
-            deferrals.done()
-        end
+    if AlreadyChecked[playerIP] then
+        handleDeferral(deferrals, Config.Locales.VPN_Detected .. '\n' .. Config.Locales.VPN_Detected_Message,
+            adaptiveCard.VPN_Detected)
+        return
+    elseif AlreadyCheckedCountry[playerIP] then
+        handleDeferral(deferrals, Config.Locales.Country_Detected .. '\n' .. Config.Locales.Country_Detected_Message,
+            adaptiveCard.Country_Detected)
         return
     end
 
     PerformHttpRequest("http://ip-api.com/json/" .. playerIP .. "?fields=66846719", function(err, text, headers)
         local data = json.decode(text)
         if data and data.status == "success" then
-            if data.proxy then
+            if data.proxy or data.hosting then
                 AlreadyChecked[playerIP] = true
-                deferrals.presentCard(adaptiveCard)
+                handleDeferral(deferrals, Config.Locales.VPN_Detected .. '\n' .. Config.Locales.VPN_Detected_Message,
+                    adaptiveCard.VPN_Detected)
             else
-                AlreadyChecked[playerIP] = false
-                deferrals.done()
+                if Config.CountryCheck and not Config.AllowedCountrys[data.countryCode] then
+                    AlreadyCheckedCountry[playerIP] = true
+                    handleDeferral(deferrals,
+                        Config.Locales.Country_Detected .. '\n' .. Config.Locales.Country_Detected_Message,
+                        adaptiveCard.Country_Detected)
+                else
+                    AlreadyChecked[playerIP] = false
+                    AlreadyCheckedCountry[playerIP] = false
+                    deferrals.done()
+                end
             end
         else
             deferrals.done(Config.Locales.API_Error)
@@ -115,7 +170,7 @@ if Config.VersionCheck then
             end
         end
 
-        local function checkVersion(err, responseText, headers)
+        PerformHttpRequest(versionUrl, function(err, responseText, headers)
             if err ~= 200 then
                 print('[^1ERROR^0] Failed to check for updates: HTTP ' .. err)
                 return
@@ -130,25 +185,24 @@ if Config.VersionCheck then
             local isUpdateAvailable, errorMsg = isVersionNewer(curVersion, responseText)
 
             if errorMsg then
-                print('[^1ERROR^0] Version check error: ' .. errorMsg)
+                print('[^4Wave-Projects^0][^1Error^0] Version check error: ' .. errorMsg)
             elseif isUpdateAvailable == nil then
-                print('[^1ERROR^0] Unable to compare versions.')
+                print('[^4Wave-Projects^0][^1Error^0] Unable to compare versions.')
             elseif isUpdateAvailable then
-                print('[^1ERROR^0] ' .. resourceName .. ' is outdated. Consider updating to the latest version.')
-                print('[^1ERROR^0] Current version: ' .. curVersion)
-                print('[^1ERROR^0] Latest version: ' .. responseText)
+                print('[^4Wave-Projects^0][^1Error^0] ' ..
+                    resourceName .. ' is outdated. Consider updating to the latest version.')
+                print('[^4Wave-Projects^0][^1Error^0] Current version: ' .. curVersion)
+                print('[^4Wave-Projects^0][^1Error^0] Latest version: ' .. responseText)
             elseif not isUpdateAvailable then
                 if curVersion ~= responseText then
-                    print('[^1ERROR^0] ' ..
+                    print('[^4Wave-Projects^0][^1Error^0] ' ..
                         resourceName .. ' is using a version newer than the latest version available.')
-                    print('[^1ERROR^0] Current version: ' .. curVersion)
-                    print('[^1ERROR^0] Latest version: ' .. responseText)
+                    print('[^4Wave-Projects^0][^1Error^0] Current version: ' .. curVersion)
+                    print('[^4Wave-Projects^0][^1Error^0] Latest version: ' .. responseText)
                 else
-                    print("[^2SUCCESS^0] " .. resourceName .. " is up to date, have fun!")
+                    print("[^4Wave-Projects^0][^2Success^0] " .. resourceName .. " is up to date, have fun!")
                 end
             end
-        end
-
-        PerformHttpRequest(versionUrl, checkVersion, "GET")
+        end, "GET")
     end)
 end
